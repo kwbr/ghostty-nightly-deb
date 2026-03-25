@@ -19,4 +19,8 @@ RUN ZIG_VER="0.15.2" && \
     mv zig-x86_64-linux-${ZIG_VER}/lib /usr/local/lib/zig && \
     rm -rf zig-x86_64-linux-${ZIG_VER} zig.tar.xz
 
+RUN useradd -m -s /bin/bash builder
 WORKDIR /build
+RUN chown builder:builder /build
+
+USER builder

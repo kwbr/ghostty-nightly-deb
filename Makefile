@@ -14,6 +14,7 @@ image:
 build: image
 	mkdir -p $(SOURCE_DIR) $(OUT_DIR)
 	podman run --rm -it \
+		--userns keep-id \
 		-v $(CURDIR)/$(SCRIPT):/usr/local/bin/$(SCRIPT):Z \
 		-v $(SOURCE_DIR):/build/source:Z \
 		-v $(OUT_DIR):/dist:Z \
