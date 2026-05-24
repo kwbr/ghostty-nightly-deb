@@ -1,4 +1,5 @@
-FROM debian:sid
+ARG DEBIAN_DIST=sid
+FROM debian:${DEBIAN_DIST}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,16 +9,15 @@ RUN apt-get update && apt-get install -y \
     libfontconfig-dev libharfbuzz-dev libpixman-1-dev \
     libx11-dev libwayland-dev libxkbcommon-dev \
     libgl-dev libegl-dev blueprint-compiler libxml2-utils \
-    pandoc \
+    pandoc gnupg lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ZIG_VER="0.15.2" && \
-    URL="https://ziglang.org/download/${ZIG_VER}/zig-x86_64-linux-${ZIG_VER}.tar.xz" && \
-    curl -L ${URL} -o zig.tar.xz && \
-    tar -xf zig.tar.xz && \
-    mv zig-x86_64-linux-${ZIG_VER}/zig /usr/local/bin/ && \
-    mv zig-x86_64-linux-${ZIG_VER}/lib /usr/local/lib/zig && \
-    rm -rf zig-x86_64-linux-${ZIG_VER} zig.tar.xz
+RUN curl -sS https://debian.griffo.io/EA0F721D231FDD3A0A17B9AC7808B4DD62C41256.asc \
+    | gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/debian.griffo.io.gpg \
+    && echo "deb https://debian.griffo.io/apt $(lsb_release -sc) main" \
+    | tee /etc/apt/sources.list.d/debian.griffo.io.list \
+    && apt-get update \
+    && apt-get install -y zig-oldstable
 
 RUN useradd -m -s /bin/bash builder
 WORKDIR /build

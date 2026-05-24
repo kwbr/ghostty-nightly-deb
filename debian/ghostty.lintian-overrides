@@ -1,0 +1,9 @@
+# Zig ReleaseFast results in unstripped binaries that we handle manually/skip
+ghostty: unstripped-binary-or-object *
+# Zig's build system often bundles these or uses specialized paths
+ghostty: embedded-library *
+ghostty: custom-library-search-path *
+# Internal libraries
+ghostty: package-name-doesnt-match-sonames *
+ghostty: link-to-shared-library-in-wrong-package *
+ghostty: no-code-sections *

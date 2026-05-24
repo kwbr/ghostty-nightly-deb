@@ -1,0 +1,14 @@
+Source: ghostty
+Section: x11
+Priority: optional
+Maintainer: Ghostty Nightly Builder <nightly@ghostty.org>
+Build-Depends: debhelper-compat (= 13), pkg-config, libgtk-4-dev, libadwaita-1-dev, libgtk4-layer-shell-dev, libfontconfig-dev, libharfbuzz-dev, libpixman-1-dev, blueprint-compiler, pandoc
+Standards-Version: 4.6.2
+Homepage: https://github.com/ghostty-org/ghostty
+
+Package: ghostty
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: x-terminal-emulator
+Description: GPU-accelerated terminal emulator (Nightly)
+ Built from git hash @GIT_HASH@ with pandoc-generated documentation.

@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+
+# Extract version from changelog and convert to valid SemVer for Zig
+# Debian: 1.3.2~dev~nightly+c74f6d56d -> Zig: 1.3.2-dev.nightly+git.c74f6d56d
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+INTERNAL_VER := $(shell echo $(DEB_VERSION) | sed 's/~/-/ ; s/~/\./g ; s/+/+git./')
+
+ZIG = zig
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(ZIG) build \
+		--summary all \
+		--prefix $(CURDIR)/zig-out \
+		-Doptimize=ReleaseFast \
+		-Dcpu=baseline \
+		-Dpie=true \
+		-Demit-docs \
+		-Dstrip=false \
+		-Dversion-string=$(INTERNAL_VER)
+
+override_dh_auto_install:
+	$(ZIG) build \
+		--prefix $(CURDIR)/debian/ghostty/usr \
+		-Doptimize=ReleaseFast \
+		-Dcpu=baseline \
+		-Dpie=true \
+		-Dstrip=false \
+		-Dversion-string=$(INTERNAL_VER) \
+		--cache-dir $(CURDIR)/.zig-cache
+	
+	# Clean up hardcoded staging paths in metadata files
+	find $(CURDIR)/debian/ghostty/usr/share -type f \( -name "*.desktop" -o -name "*.service" -o -name "*.dbus-1" \) -exec sed -i "s|$(CURDIR)/debian/ghostty||g" {} +
+	
+	# Fix Zsh completion path
+	if [ -d "$(CURDIR)/debian/ghostty/usr/share/zsh/site-functions" ]; then \
+		mkdir -p $(CURDIR)/debian/ghostty/usr/share/zsh/vendor-completions; \
+		mv $(CURDIR)/debian/ghostty/usr/share/zsh/site-functions/* $(CURDIR)/debian/ghostty/usr/share/zsh/vendor-completions/; \
+		rmdir $(CURDIR)/debian/ghostty/usr/share/zsh/site-functions; \
+	fi
+
+	# Remove static libraries
+	find $(CURDIR)/debian/ghostty -name "*.a" -delete
+	
+	# Ensure the cache doesn't end up in the package
+	rm -rf $(CURDIR)/debian/ghostty/usr/.zig-cache || true
+
+override_dh_auto_clean:
+	# Don't delete .zig-cache during dh_clean to preserve the volume cache
+	rm -rf zig-out
+
+override_dh_fixperms:
+	dh_fixperms
+	# Fix executable bit on desktop files
+	find $(CURDIR)/debian/ghostty/usr/share -name "*.desktop" -exec chmod -x {} +
+
+# Use dh_strip to create debug symbols.
+# Since we build with -Dstrip=false, dh_strip will automatically split symbols into a dbgsym package.
+override_dh_strip:
+	dh_strip
+
+override_dh_dwz:
